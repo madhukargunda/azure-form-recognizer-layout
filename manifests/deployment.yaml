@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layout-form-recognizer
+  labels:
+    app.kubernetes.io/name: form-recognizer
+    app.kubernetes.io/instance: layout
+    app.kubernetes.io/version: "3.1"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: form-recognizer
+      app.kubernetes.io/instance: layout
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: form-recognizer
+        app.kubernetes.io/instance: layout
+    spec:
+      containers:
+        - name: layout
+          image: "mcr.microsoft.com/azure-cognitive-services/form-recognizer/layout-3.1:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          env:
+            - name: eula
+              value: "accept"
+            - name: Logging:Console:LogLevel:Default
+              value: "Information"
+            - name: SharedRootFolder
+              value: "/share"
+            - name: Mounts:Shared
+              value: "/share"
+            - name: Mounts:Output
+              value: "/logs"
+          volumeMounts:
+            - name: shared
+              mountPath: /share
+            - name: output
+              mountPath: /logs
+          readinessProbe:
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 6
+      volumes:
+        - name: shared
+          persistentVolumeClaim:
+            claimName: layout-form-recognizer-shared
+        - name: output
+          persistentVolumeClaim:
+            claimName: layout-form-recognizer-output
+

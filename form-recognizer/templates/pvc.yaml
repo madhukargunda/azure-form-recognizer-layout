@@ -1,0 +1,36 @@
+{{- if .Values.persistence.shared.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "form-recognizer.pvcName" (dict "root" . "volume" (dict "name" "shared")) }}
+  labels:
+    {{- include "form-recognizer.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.persistence.shared.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.shared.size }}
+  {{- if .Values.persistence.shared.storageClassName }}
+  storageClassName: {{ .Values.persistence.shared.storageClassName | quote }}
+  {{- end }}
+---
+{{- end }}
+{{- if .Values.persistence.output.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "form-recognizer.pvcName" (dict "root" . "volume" (dict "name" "output")) }}
+  labels:
+    {{- include "form-recognizer.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    {{- toYaml .Values.persistence.output.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.output.size }}
+  {{- if .Values.persistence.output.storageClassName }}
+  storageClassName: {{ .Values.persistence.output.storageClassName | quote }}
+  {{- end }}
+{{- end }}
+

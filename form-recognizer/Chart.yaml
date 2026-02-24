@@ -1,0 +1,7 @@
+apiVersion: v2
+name: form-recognizer
+description: Azure AI Document Intelligence Layout container
+type: application
+version: 0.1.0
+appVersion: "3.1"
+

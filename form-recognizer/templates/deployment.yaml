@@ -1,0 +1,148 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "form-recognizer.fullname" . }}
+  labels:
+    {{- include "form-recognizer.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "form-recognizer.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "form-recognizer.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: layout
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          env:
+            {{- range .Values.env }}
+            - name: {{ .name | quote }}
+              value: {{ .value | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.proxyEnv }}
+            - name: {{ $key | quote }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- if or .Values.secret.create .Values.secret.nameOverride }}
+            {{- if .Values.secretEnv.apikey }}
+            - name: apikey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "form-recognizer.secretName" . }}
+                  key: apikey
+            {{- end }}
+            {{- if .Values.secretEnv.billing }}
+            - name: billing
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "form-recognizer.secretName" . }}
+                  key: billing
+            {{- end }}
+            {{- end }}
+          {{- if .Values.config.create }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "form-recognizer.configName" . }}
+          {{- end }}
+          volumeMounts:
+            {{- range .Values.volumeMounts }}
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- if .Values.tlsCertSecret.name }}
+            - name: tls-cert
+              mountPath: {{ .Values.tlsCertSecret.mountPath }}
+              readOnly: true
+            {{- end }}
+            {{- if .Values.caCertConfigMap.name }}
+            - name: ca-cert
+              mountPath: {{ .Values.caCertConfigMap.mountPath }}
+              readOnly: true
+            {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.probes.readiness.enabled }}
+          readinessProbe:
+            {{- if eq .Values.probes.readiness.type "httpGet" }}
+            httpGet:
+              path: {{ .Values.probes.httpGet.path }}
+              port: {{ .Values.service.targetPort }}
+              scheme: {{ .Values.probes.httpGet.scheme }}
+            {{- else }}
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+          {{- end }}
+          {{- if .Values.probes.liveness.enabled }}
+          livenessProbe:
+            {{- if eq .Values.probes.liveness.type "httpGet" }}
+            httpGet:
+              path: {{ .Values.probes.httpGet.path }}
+              port: {{ .Values.service.targetPort }}
+              scheme: {{ .Values.probes.httpGet.scheme }}
+            {{- else }}
+            tcpSocket:
+              port: {{ .Values.service.targetPort }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+          {{- end }}
+      volumes:
+        {{- if .Values.persistence.shared.enabled }}
+        - name: shared
+          persistentVolumeClaim:
+            claimName: {{ include "form-recognizer.pvcName" (dict "root" . "volume" (dict "name" "shared")) }}
+        {{- end }}
+        {{- if .Values.persistence.output.enabled }}
+        - name: output
+          persistentVolumeClaim:
+            claimName: {{ include "form-recognizer.pvcName" (dict "root" . "volume" (dict "name" "output")) }}
+        {{- end }}
+        {{- if .Values.tlsCertSecret.name }}
+        - name: tls-cert
+          secret:
+            secretName: {{ .Values.tlsCertSecret.name }}
+            {{- if .Values.tlsCertSecret.items }}
+            items:
+              {{- toYaml .Values.tlsCertSecret.items | nindent 14 }}
+            {{- end }}
+        {{- end }}
+        {{- if .Values.caCertConfigMap.name }}
+        - name: ca-cert
+          configMap:
+            name: {{ .Values.caCertConfigMap.name }}
+            {{- if .Values.caCertConfigMap.items }}
+            items:
+              {{- toYaml .Values.caCertConfigMap.items | nindent 14 }}
+            {{- end }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

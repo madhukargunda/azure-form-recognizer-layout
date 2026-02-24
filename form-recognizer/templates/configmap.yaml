@@ -1,0 +1,11 @@
+{{- if .Values.config.create }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "form-recognizer.configName" . }}
+  labels:
+    {{- include "form-recognizer.labels" . | nindent 4 }}
+data:
+  {{- toYaml .Values.config.data | nindent 2 }}
+{{- end }}
+
