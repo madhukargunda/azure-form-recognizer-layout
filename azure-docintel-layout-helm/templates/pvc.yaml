@@ -2,9 +2,9 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "form-recognizer.pvcName" (dict "root" . "volume" (dict "name" "shared")) }}
+  name: {{ include "azure-docintel-layout.pvcName" (dict "root" . "volume" (dict "name" "shared")) }}
   labels:
-    {{- include "form-recognizer.labels" . | nindent 4 }}
+    {{- include "azure-docintel-layout.labels" . | nindent 4 }}
 spec:
   accessModes:
     {{- toYaml .Values.persistence.shared.accessModes | nindent 4 }}
@@ -20,9 +20,9 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "form-recognizer.pvcName" (dict "root" . "volume" (dict "name" "output")) }}
+  name: {{ include "azure-docintel-layout.pvcName" (dict "root" . "volume" (dict "name" "output")) }}
   labels:
-    {{- include "form-recognizer.labels" . | nindent 4 }}
+    {{- include "azure-docintel-layout.labels" . | nindent 4 }}
 spec:
   accessModes:
     {{- toYaml .Values.persistence.output.accessModes | nindent 4 }}

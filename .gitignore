@@ -32,3 +32,8 @@ build/
 ### VS Code ###
 .vscode/
 
+### Helm & Manifests ###
+manifests.all.yaml
+manifests/
+rendered-manifests/
+helm_path.txt

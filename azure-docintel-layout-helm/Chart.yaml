@@ -1,5 +1,5 @@
 apiVersion: v2
-name: form-recognizer
+name: azure-docintel-layout
 description: Azure AI Document Intelligence Layout container
 type: application
 version: 0.1.0

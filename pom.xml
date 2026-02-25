@@ -27,10 +27,9 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>25</java.version>
-		<artifactory.release.url>https://ARTIFACTORY_HOST/artifactory/REPO_NAME</artifactory.release.url>
-		<artifactory.snapshot.url>https://ARTIFACTORY_HOST/artifactory/REPO_NAME</artifactory.snapshot.url>
+		<maven.compile.source>25</maven.compile.source>
 		<assembly.descriptor>src/assembly/form-recognizer.xml</assembly.descriptor>
+		<helm.chart.output.directory>${project.build.directory}</helm.chart.output.directory>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -45,16 +44,6 @@
 		</dependency>
 	</dependencies>
 
-	<distributionManagement>
-		<repository>
-			<id>artifactory-releases</id>
-			<url>${artifactory.release.url}</url>
-		</repository>
-		<snapshotRepository>
-			<id>artifactory-snapshots</id>
-			<url>${artifactory.snapshot.url}</url>
-		</snapshotRepository>
-	</distributionManagement>
 
 	<build>
 		<plugins>

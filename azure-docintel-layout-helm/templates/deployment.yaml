@@ -1,18 +1,46 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "form-recognizer.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  name: {{ include "azure-docintel-layout.fullname" . }}
   labels:
-    {{- include "form-recognizer.labels" . | nindent 4 }}
+    {{- include "azure-docintel-layout.labels" . | nindent 4 }}
+    app: {{ .Values.labels.app | quote }}
+    component: {{ .Values.labels.component | quote }}
+    function: {{ .Values.labels.function | quote }}
+    env: {{ .Values.labels.env | quote }}
+    appcode: {{ .Values.labels.appcode | quote }}
+    tier: {{ .Values.labels.tier | quote }}
+    opscontact: {{ .Values.labels.opscontact | quote }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "form-recognizer.selectorLabels" . | nindent 6 }}
+      {{- include "azure-docintel-layout.selectorLabels" . | nindent 6 }}
+      app: {{ .Values.labels.app | quote }}
+      component: {{ .Values.labels.component | quote }}
+      function: {{ .Values.labels.function | quote }}
+      env: {{ .Values.labels.env | quote }}
+      appcode: {{ .Values.labels.appcode | quote }}
+      tier: {{ .Values.labels.tier | quote }}
+      opscontact: {{ .Values.labels.opscontact | quote }}
   template:
     metadata:
       labels:
-        {{- include "form-recognizer.selectorLabels" . | nindent 8 }}
+        {{- include "azure-docintel-layout.selectorLabels" . | nindent 8 }}
+        app: {{ .Values.labels.app | quote }}
+        component: {{ .Values.labels.component | quote }}
+        function: {{ .Values.labels.function | quote }}
+        env: {{ .Values.labels.env | quote }}
+        appcode: {{ .Values.labels.appcode | quote }}
+        tier: {{ .Values.labels.tier | quote }}
+        opscontact: {{ .Values.labels.opscontact | quote }}
+      annotations:
+        com.illumio.app: {{ .Values.annotations.illumioApp | quote }}
+        role: {{ .Values.annotations.role | quote }}
+        env: {{ .Values.annotations.env | quote }}
+        lo: {{ .Values.annotations.lo | quote }}
+        app-tiers.middleware: {{ .Values.annotations.appTiersMiddleware | quote }}
     spec:
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -27,46 +55,55 @@ spec:
               containerPort: {{ .Values.service.targetPort }}
               protocol: TCP
           env:
+            # Environment variables from values.yaml
+            # These can include special characters like colons
             {{- range .Values.env }}
-            - name: {{ .name | quote }}
+            - name: {{ .name }}
               value: {{ .value | quote }}
             {{- end }}
-            {{- range $key, $value := .Values.proxyEnv }}
-            - name: {{ $key | quote }}
-              value: {{ $value | quote }}
-            {{- end }}
-            {{- if or .Values.secret.create .Values.secret.nameOverride }}
+            # Load secrets from pre-existing or Helm-created secret
+            {{- if .Values.secret.externalSecretName }}
+            - name: apikey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.externalSecretName }}
+                  key: apikey
+            - name: billing
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.externalSecretName }}
+                  key: billing
+            {{- else if or .Values.secret.create .Values.secret.nameOverride }}
             {{- if .Values.secretEnv.apikey }}
             - name: apikey
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "form-recognizer.secretName" . }}
+                  name: {{ include "azure-docintel-layout.secretName" . }}
                   key: apikey
             {{- end }}
             {{- if .Values.secretEnv.billing }}
             - name: billing
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "form-recognizer.secretName" . }}
+                  name: {{ include "azure-docintel-layout.secretName" . }}
                   key: billing
             {{- end }}
             {{- end }}
-          {{- if .Values.config.create }}
-          envFrom:
-            - configMapRef:
-                name: {{ include "form-recognizer.configName" . }}
-          {{- end }}
           volumeMounts:
-            {{- range .Values.volumeMounts }}
-            - name: {{ .name }}
-              mountPath: {{ .mountPath }}
+            {{- if .Values.persistence.shared.enabled }}
+            - name: shared
+              mountPath: /share
             {{- end }}
-            {{- if .Values.tlsCertSecret.name }}
+            {{- if .Values.persistence.output.enabled }}
+            - name: output
+              mountPath: /logs
+            {{- end }}
+            {{- if and .Values.tlsCertSecret .Values.tlsCertSecret.name }}
             - name: tls-cert
               mountPath: {{ .Values.tlsCertSecret.mountPath }}
               readOnly: true
             {{- end }}
-            {{- if .Values.caCertConfigMap.name }}
+            {{- if and .Values.caCertConfigMap .Values.caCertConfigMap.name }}
             - name: ca-cert
               mountPath: {{ .Values.caCertConfigMap.mountPath }}
               readOnly: true
@@ -109,14 +146,14 @@ spec:
         {{- if .Values.persistence.shared.enabled }}
         - name: shared
           persistentVolumeClaim:
-            claimName: {{ include "form-recognizer.pvcName" (dict "root" . "volume" (dict "name" "shared")) }}
+            claimName: {{ include "azure-docintel-layout.pvcName" (dict "root" . "volume" (dict "name" "shared")) }}
         {{- end }}
         {{- if .Values.persistence.output.enabled }}
         - name: output
           persistentVolumeClaim:
-            claimName: {{ include "form-recognizer.pvcName" (dict "root" . "volume" (dict "name" "output")) }}
+            claimName: {{ include "azure-docintel-layout.pvcName" (dict "root" . "volume" (dict "name" "output")) }}
         {{- end }}
-        {{- if .Values.tlsCertSecret.name }}
+        {{- if and .Values.tlsCertSecret .Values.tlsCertSecret.name }}
         - name: tls-cert
           secret:
             secretName: {{ .Values.tlsCertSecret.name }}
@@ -125,7 +162,7 @@ spec:
               {{- toYaml .Values.tlsCertSecret.items | nindent 14 }}
             {{- end }}
         {{- end }}
-        {{- if .Values.caCertConfigMap.name }}
+        {{- if and .Values.caCertConfigMap .Values.caCertConfigMap.name }}
         - name: ca-cert
           configMap:
             name: {{ .Values.caCertConfigMap.name }}
@@ -146,3 +183,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+

@@ -1,0 +1,8 @@
+1. The Azure AI Document Intelligence Layout service is deployed as:
+   {{ include "azure-docintel-layout.fullname" . }}
+
+2. To access the service inside the cluster:
+   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "azure-docintel-layout.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.targetPort }}
+
+3. If you use a non-ClusterIP service, check your Service configuration for external access.
+

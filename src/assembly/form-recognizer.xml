@@ -9,8 +9,8 @@
   <baseDirectory>${project.artifactId}-${project.version}</baseDirectory>
   <fileSets>
     <fileSet>
-      <directory>${project.basedir}/form-recognizer</directory>
-      <outputDirectory>form-recognizer</outputDirectory>
+      <directory>${project.basedir}/azure-docintel-layout-helm</directory>
+      <outputDirectory>azure-docintel-layout-helm</outputDirectory>
       <includes>
         <include>**/*</include>
       </includes>

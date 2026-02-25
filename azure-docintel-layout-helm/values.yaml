@@ -1,0 +1,135 @@
+replicaCount: 1
+
+# Kubernetes Namespace
+namespace: default
+
+# Labels for Deployment, Pod, and selectors
+labels:
+  app: "azure-docintel-layout"
+  component: "document-intelligence"
+  function: "layout-recognition"
+  env: "dev"
+  appcode: "ADI-LAY"
+  tier: "middleware"
+  opscontact: "devops-team"
+
+# Annotations for Pod metadata
+annotations:
+  illumioApp: "azure-document-intelligence"
+  role: "layout-processor"
+  env: "dev"
+  lo: "false"
+  appTiersMiddleware: "true"
+
+# Image Configuration
+# Note: This image only supports linux/amd64 platform
+# For local testing with Docker: docker pull --platform=linux/amd64 mcr.microsoft.com/azure-cognitive-services/form-recognizer/layout-4.0
+image:
+  repository: mcr.microsoft.com/azure-cognitive-services/form-recognizer/layout-4.0
+  tag: latest
+  pullPolicy: IfNotPresent
+  # Platform: linux/amd64 (ARM64 not supported)
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 5000
+  targetPort: 5000
+  annotations: {}
+  labels: {}
+
+env:
+  - name: eula
+    value: accept
+  - name: Logging:Console:LogLevel:Default
+    value: Information
+  - name: SharedRootFolder
+    value: /share
+  - name: Mounts:Shared
+    value: /share
+  - name: Mounts:Output
+    value: /logs
+
+proxyEnv: {}
+
+tlsCertSecret:
+  name: ""
+  mountPath: /etc/ssl/certs/custom
+  items: []
+
+caCertConfigMap:
+  name: ""
+  mountPath: /etc/ssl/certs/custom
+  items: []
+
+secret:
+  create: false  # Set to false if using pre-existing secret
+  nameOverride: ""
+  # externalSecretName: ""  # Set this to reference pre-existing secret
+
+# secretEnv is ONLY used when secret.create=true (Helm creates the secret)
+# When using externalSecretName, secretEnv is NOT needed
+secretEnv:
+  apikey: ""
+  billing: ""
+
+config:
+  create: false  # Set to true if you need a separate ConfigMap for additional data
+  nameOverride: ""
+  externalConfigMapName: ""  # Optional: reference to external ConfigMap
+  data: {}  # Additional data for ConfigMap (if needed)
+
+volumeMounts:
+  - name: shared
+    mountPath: /share
+  - name: output
+    mountPath: /logs
+
+persistence:
+  shared:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: ""
+  output:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: ""
+
+probes:
+  readiness:
+    enabled: true
+    type: tcpSocket
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
+  liveness:
+    enabled: true
+    type: tcpSocket
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 6
+  httpGet:
+    path: /
+    scheme: HTTP
+
+resources:
+  requests:
+    cpu: 4
+    memory: 12Gi
+  limits:
+    cpu: 8
+    memory: 24Gi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+imagePullSecrets: []

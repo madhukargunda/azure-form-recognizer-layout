@@ -1,0 +1,16 @@
+# Default environment overrides
+replicaCount: 1
+
+# Image Configuration
+# Note: This image only supports linux/amd64 platform
+# For local testing with Docker: docker pull --platform=linux/amd64 mcr.microsoft.com/azure-cognitive-services/form-recognizer/layout-4.0
+image:
+  repository: mcr.microsoft.com/azure-cognitive-services/form-recognizer/layout-4.0
+  tag: latest
+  pullPolicy: IfNotPresent
+  # Platform: linux/amd64 (ARM64 not supported)
+
+env:
+  - name: Logging:Console:LogLevel:Default
+    value: Information
+

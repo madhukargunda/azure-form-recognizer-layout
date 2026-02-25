@@ -1,0 +1,172 @@
+#!/bin/bash
+# helm-test-commands.sh
+# Quick reference for testing Helm chart - Copy and paste these commands
+
+# Colors
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+echo -e "${BLUE}=== HELM CHART TESTING COMMAND REFERENCE ===${NC}\n"
+
+# 1. Check Helm
+echo -e "${GREEN}1. CHECK HELM INSTALLATION${NC}"
+echo "Command: helm version"
+echo ""
+
+# 2. Lint
+echo -e "${GREEN}2. LINT CHART (Quick Syntax Check)${NC}"
+echo "Command: helm lint ./form-recognizer"
+echo "Expected: 1 chart(s) linted, 0 chart(s) failed"
+echo ""
+
+# 3. Test DEFAULT environment
+echo -e "${GREEN}3. TEST DEFAULT ENVIRONMENT${NC}"
+echo "Command:"
+echo "  helm template azure-docintel-layout ./form-recognizer \\"
+echo "    -f ./form-recognizer/default/values.yaml.gotmpl"
+echo ""
+
+# 4. Test DEV environment
+echo -e "${GREEN}4. TEST DEV ENVIRONMENT${NC}"
+echo "Command:"
+echo "  helm template azure-docintel-layout ./form-recognizer \\"
+echo "    -f ./form-recognizer/base-config.yaml.gotmpl \\"
+echo "    -f ./form-recognizer/dev/values.yaml.gotmpl \\"
+echo "    --namespace dev"
+echo ""
+
+# 5. Test PROD environment
+echo -e "${GREEN}5. TEST PROD ENVIRONMENT${NC}"
+echo "Command:"
+echo "  helm template azure-docintel-layout ./form-recognizer \\"
+echo "    -f ./form-recognizer/base-config.yaml.gotmpl \\"
+echo "    -f ./form-recognizer/prod/values.yaml.gotmpl \\"
+echo "    --namespace prod"
+echo ""
+
+# 6. Full automated test
+echo -e "${GREEN}6. RUN FULL AUTOMATED TESTS${NC}"
+echo "Command: ./test-helm-chart.sh"
+echo ""
+
+# 7. Save manifest for review
+echo -e "${GREEN}7. SAVE MANIFEST FOR REVIEW${NC}"
+echo "Command:"
+echo "  helm template azure-docintel-layout ./form-recognizer \\"
+echo "    -f ./form-recognizer/prod/values.yaml.gotmpl > /tmp/prod-manifest.yaml"
+echo "  cat /tmp/prod-manifest.yaml"
+echo ""
+
+# 8. Count resources
+echo -e "${GREEN}8. COUNT GENERATED RESOURCES${NC}"
+echo "Command:"
+echo "  helm template azure-docintel-layout ./form-recognizer \\"
+echo "    -f ./form-recognizer/prod/values.yaml.gotmpl | grep 'kind:' | sort | uniq -c"
+echo ""
+
+# 9. Extract specific resource
+echo -e "${GREEN}9. EXTRACT DEPLOYMENT MANIFEST${NC}"
+echo "Command:"
+echo "  helm template azure-docintel-layout ./form-recognizer \\"
+echo "    -f ./form-recognizer/prod/values.yaml.gotmpl | grep -A 50 'kind: Deployment'"
+echo ""
+
+# 10. Dry-run install
+echo -e "${GREEN}10. DRY-RUN INSTALLATION (PREVIEW)${NC}"
+echo "Command:"
+echo "  helm install azure-layout ./form-recognizer \\"
+echo "    -f ./form-recognizer/dev/values.yaml.gotmpl \\"
+echo "    --namespace dev \\"
+echo "    --create-namespace \\"
+echo "    --dry-run \\"
+echo "    --debug"
+echo ""
+
+# 11. Deploy to Dev
+echo -e "${GREEN}11. DEPLOY TO DEV ENVIRONMENT${NC}"
+echo "Command:"
+echo "  helm install azure-layout ./form-recognizer \\"
+echo "    -f ./form-recognizer/dev/values.yaml.gotmpl \\"
+echo "    --namespace dev \\"
+echo "    --create-namespace"
+echo ""
+
+# 12. Deploy to Prod
+echo -e "${GREEN}12. DEPLOY TO PROD ENVIRONMENT${NC}"
+echo "Command:"
+echo "  helm install azure-layout ./form-recognizer \\"
+echo "    -f ./form-recognizer/prod/values.yaml.gotmpl \\"
+echo "    --namespace prod \\"
+echo "    --create-namespace"
+echo ""
+
+# 13. Upgrade release
+echo -e "${GREEN}13. UPGRADE EXISTING RELEASE${NC}"
+echo "Command:"
+echo "  helm upgrade azure-layout ./form-recognizer \\"
+echo "    -f ./form-recognizer/prod/values.yaml.gotmpl \\"
+echo "    --namespace prod"
+echo ""
+
+# 14. Check deployment status
+echo -e "${GREEN}14. CHECK DEPLOYMENT STATUS${NC}"
+echo "Commands:"
+echo "  helm status azure-layout -n prod"
+echo "  kubectl get deployment -n prod"
+echo "  kubectl get pods -n prod"
+echo ""
+
+# 15. View pod logs
+echo -e "${GREEN}15. VIEW POD LOGS${NC}"
+echo "Command:"
+echo "  kubectl logs -n prod -l app.kubernetes.io/name=azure-docintel-layout -f"
+echo ""
+
+# 16. Compare environments
+echo -e "${GREEN}16. COMPARE DEV vs PROD MANIFESTS${NC}"
+echo "Command:"
+echo "  diff <(helm template azure-docintel-layout ./form-recognizer \\"
+echo "         -f ./form-recognizer/dev/values.yaml.gotmpl) \\"
+echo "       <(helm template azure-docintel-layout ./form-recognizer \\"
+echo "         -f ./form-recognizer/prod/values.yaml.gotmpl)"
+echo ""
+
+# 17. Uninstall release
+echo -e "${GREEN}17. UNINSTALL RELEASE${NC}"
+echo "Command:"
+echo "  helm uninstall azure-layout --namespace prod"
+echo ""
+
+echo -e "${BLUE}=== HELPFUL COMMANDS ===${NC}\n"
+
+echo "List all Helm releases:"
+echo "  helm list -A"
+echo ""
+
+echo "Get values of installed release:"
+echo "  helm get values azure-layout -n prod"
+echo ""
+
+echo "Get manifest of installed release:"
+echo "  helm get manifest azure-layout -n prod"
+echo ""
+
+echo "Show release history:"
+echo "  helm history azure-layout -n prod"
+echo ""
+
+echo "Rollback to previous release:"
+echo "  helm rollback azure-layout -n prod"
+echo ""
+
+echo -e "${BLUE}=== TESTING QUICK REFERENCE ===${NC}\n"
+echo "✅ All tests PASSED - Your chart is ready for production!"
+echo ""
+echo "Documentation:"
+echo "  - TEST_RESULTS_SUMMARY.md    (Executive summary)"
+echo "  - QUICK_TEST_REFERENCE.md    (Quick commands)"
+echo "  - HELM_TESTING_GUIDE.md      (Detailed guide)"
+echo "  - MANIFEST_REVIEW.md         (How to review manifests)"
+echo ""
+

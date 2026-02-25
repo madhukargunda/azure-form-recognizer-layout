@@ -1,0 +1,15 @@
+{{- if .Values.config.externalConfigMapName }}
+# Create ConfigMap only if externalConfigMapName is specified
+# This ConfigMap stores simple key-value pairs (no colons allowed in keys)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.config.externalConfigMapName }}
+  labels:
+    {{- include "azure-docintel-layout.labels" . | nindent 4 }}
+data:
+  {{- if .Values.config.data }}
+  {{- toYaml .Values.config.data | nindent 2 }}
+  {{- end }}
+{{- end }}
+

@@ -1,0 +1,178 @@
+# Dev environment overrides
+replicaCount: 1
+
+# Kubernetes Namespace for Dev
+namespace: dev
+
+# Labels for Dev environment
+labels:
+  app: "azure-docintel-layout"
+  component: "document-intelligence"
+  function: "layout-recognition"
+  env: "dev"
+  appcode: "ADI-LAY-DEV"
+  tier: "middleware"
+  opscontact: "dev-team"
+
+# Annotations for Dev environment
+annotations:
+  illumioApp: "azure-document-intelligence-dev"
+  role: "layout-processor-dev"
+  env: "dev"
+  lo: "false"
+  appTiersMiddleware: "true"
+
+# Image Configuration
+# Note: This image only supports linux/amd64 platform
+# For local testing with Docker: docker pull --platform=linux/amd64 mcr.microsoft.com/azure-cognitive-services/form-recognizer/layout-4.0
+image:
+  repository: mcr.microsoft.com/azure-cognitive-services/form-recognizer/layout-4.0
+  tag: latest
+  pullPolicy: IfNotPresent
+  # Platform: linux/amd64 (ARM64 not supported)
+
+service:
+  type: ClusterIP
+  port: 5000
+  targetPort: 5000
+
+# Volume Mounts
+volumeMounts:
+  - name: shared
+    mountPath: /share
+  - name: output
+    mountPath: /logs
+
+# Persistence Configuration
+persistence:
+  shared:
+    enabled: false  # Disabled - data stored in container
+  output:
+    enabled: false  # Disabled - data stored in container
+
+# Probes
+probes:
+  readiness:
+    enabled: true
+    type: tcpSocket
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
+  liveness:
+    enabled: true
+    type: tcpSocket
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 6
+  httpGet:
+    path: /
+    scheme: HTTP
+
+# Resource Limits
+resources:
+  requests:
+    cpu: 4
+    memory: 12Gi
+  limits:
+    cpu: 8
+    memory: 24Gi
+
+# Environment Variables
+env:
+  - name: eula
+    value: accept
+  - name: Logging:Console:LogLevel:Default
+    value: Debug
+  - name: SharedRootFolder
+    value: /share
+  - name: Mounts:Shared
+    value: /share
+  - name: Mounts:Output
+    value: /logs
+
+# Secret Environment Variables
+# NOTE: secretEnv is NOT required when using externalSecretName
+# The external secret keys (apikey, billing) will be automatically mounted
+secretEnv:
+  apikey: ""  # Not used with externalSecretName
+  billing: ""  # Not used with externalSecretName
+
+# Use Pre-existing Kubernetes Secret
+# When externalSecretName is set, it automatically mounts apikey and billing
+secret:
+  create: false  # Don't create a new secret
+  externalSecretName: "azure-layout-secret"  # Reference your pre-existing secret
+
+# Proxy Configuration (if needed)
+proxyEnv: {}
+  # HTTP_PROXY: "http://proxy.dev.example.com:8080"
+  # HTTPS_PROXY: "http://proxy.dev.example.com:8080"
+  # NO_PROXY: "localhost,127.0.0.1,.svc,.cluster.local"
+
+# TLS/CA Certificate Configuration
+tlsCertSecret:
+  name: ""  # Set if you need to mount TLS certificates
+  mountPath: /etc/ssl/certs/custom
+  items: []
+    # - key: tls.crt
+    #   path: tls.crt
+
+caCertConfigMap:
+  name: ""  # Set if you need to mount CA certificates
+  mountPath: /etc/ssl/certs/custom
+  items: []
+    # - key: ca-bundle.crt
+    #   path: ca-bundle.crt
+
+# Node Selector for environment-specific nodes (optional - commented for dev)
+nodeSelector: {}
+  # Uncomment below only if your cluster has nodes with specific labels
+  # environment: dev
+
+# Tolerations (optional - for node taints)
+tolerations: []
+  # Uncomment below only if nodes have taints
+  # - key: "environment"
+  #   operator: "Equal"
+  #   value: "dev"
+  #   effect: "NoSchedule"
+
+# Affinity (optional - pod placement rules)
+affinity: {}
+  # Uncomment below only if you need specific placement rules
+  # nodeAffinity:
+  #   requiredDuringSchedulingIgnoredDuringExecution:
+  #     nodeSelectorTerms:
+  #     - matchExpressions:
+  #       - key: environment
+  #         operator: In
+  #         values:
+  #         - dev
+
+# Use Pre-existing Kubernetes ConfigMap (Optional)
+# ConfigMap is for non-sensitive configuration data
+# All current config is already in the 'env' section above
+# ConfigMap is NOT needed unless you have additional configuration
+#
+# Currently from compose.yaml, all config is covered:
+#   - eula: accept (in env)
+#   - Logging:Console:LogLevel:Default (in env)
+#   - SharedRootFolder (in env)
+#   - Mounts:Shared (in env)
+#   - Mounts:Output (in env)
+#   - apikey, billing (in Secret, NOT ConfigMap - sensitive data)
+config:
+  create: false  # ConfigMap optional, not needed for env vars
+  externalConfigMapName: ""
+  nameOverride: ""
+  data: {}
+
+# Node Selector - Empty (pod runs on any node)
+nodeSelector: {}
+
+# Tolerations - Empty (no taints to tolerate)
+tolerations: []
+
+# Affinity - Empty (no pod placement rules)
+affinity: {}
+

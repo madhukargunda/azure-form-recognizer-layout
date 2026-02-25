@@ -1,0 +1,162 @@
+# UAT environment overrides
+replicaCount: 1
+
+# Kubernetes Namespace for UAT
+namespace: uat
+
+# Labels for UAT environment
+labels:
+  app: "azure-docintel-layout"
+  component: "document-intelligence"
+  function: "layout-recognition"
+  env: "uat"
+  appcode: "ADI-LAY-UAT"
+  tier: "middleware"
+  opscontact: "uat-team"
+
+# Annotations for UAT environment
+annotations:
+  illumioApp: "azure-document-intelligence-uat"
+  role: "layout-processor-uat"
+  env: "uat"
+  lo: "false"
+  appTiersMiddleware: "true"
+
+# Image Configuration
+# Note: This image only supports linux/amd64 platform
+# For local testing with Docker: docker pull --platform=linux/amd64 mcr.microsoft.com/azure-cognitive-services/form-recognizer/layout-4.0
+image:
+  repository: mcr.microsoft.com/azure-cognitive-services/form-recognizer/layout-4.0
+  tag: latest
+  pullPolicy: IfNotPresent
+  # Platform: linux/amd64 (ARM64 not supported)
+
+service:
+  type: ClusterIP
+  port: 5000
+  targetPort: 5000
+
+# Volume Mounts
+volumeMounts:
+  - name: shared
+    mountPath: /share
+  - name: output
+    mountPath: /logs
+
+# Persistence Configuration
+persistence:
+  shared:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: "standard"  # Adjust based on your cluster
+  output:
+    enabled: true
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: "standard"  # Adjust based on your cluster
+
+# Probes
+probes:
+  readiness:
+    enabled: true
+    type: tcpSocket
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
+  liveness:
+    enabled: true
+    type: tcpSocket
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    failureThreshold: 6
+  httpGet:
+    path: /
+    scheme: HTTP
+
+# Resource Limits
+resources:
+  requests:
+    cpu: 4
+    memory: 12Gi
+  limits:
+    cpu: 8
+    memory: 24Gi
+
+# Environment Variables
+env:
+  - name: eula
+    value: accept
+  - name: Logging:Console:LogLevel:Default
+    value: Information
+  - name: SharedRootFolder
+    value: /share
+  - name: Mounts:Shared
+    value: /share
+  - name: Mounts:Output
+    value: /logs
+
+# Secret Environment Variables
+# NOTE: secretEnv is NOT required when using externalSecretName
+# The external secret keys (apikey, billing) will be automatically mounted
+secretEnv:
+  apikey: ""  # Not used with externalSecretName
+  billing: ""  # Not used with externalSecretName
+
+# Use Pre-existing Kubernetes Secret
+# When externalSecretName is set, it automatically mounts apikey and billing
+secret:
+  create: false  # Don't create a new secret
+  externalSecretName: "azure-layout-secret"  # Reference your pre-existing secret
+
+# Proxy Configuration (if needed)
+proxyEnv: {}
+  # HTTP_PROXY: "http://proxy.uat.example.com:8080"
+  # HTTPS_PROXY: "http://proxy.uat.example.com:8080"
+  # NO_PROXY: "localhost,127.0.0.1,.svc,.cluster.local"
+
+# TLS/CA Certificate Configuration
+tlsCertSecret:
+  name: ""  # Set if you need to mount TLS certificates
+  mountPath: /etc/ssl/certs/custom
+  items: []
+    # - key: tls.crt
+    #   path: tls.crt
+
+caCertConfigMap:
+  name: ""  # Set if you need to mount CA certificates
+  mountPath: /etc/ssl/certs/custom
+  items: []
+    # - key: ca-bundle.crt
+    #   path: ca-bundle.crt
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Use Pre-existing Kubernetes ConfigMap (Optional)
+# ConfigMap is for non-sensitive configuration data
+# All current config is already in the 'env' section above
+# ConfigMap is NOT needed unless you have additional configuration
+#
+# Currently from compose.yaml, all config is covered:
+#   - eula: accept (in env)
+#   - Logging:Console:LogLevel:Default (in env)
+#   - SharedRootFolder (in env)
+#   - Mounts:Shared (in env)
+#   - Mounts:Output (in env)
+#   - apikey, billing (in Secret, NOT ConfigMap - sensitive data)
+config:
+  create: false  # ConfigMap optional, not needed for env vars
+  externalConfigMapName: ""
+  nameOverride: ""
+  data: {}
+
+# Node Selector - Empty (pod runs on any node)
+nodeSelector: {}
+
+

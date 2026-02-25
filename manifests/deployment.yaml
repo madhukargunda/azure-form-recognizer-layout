@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: layout-form-recognizer
+  name: azure-docintel-layout
   labels:
-    app.kubernetes.io/name: form-recognizer
-    app.kubernetes.io/instance: layout
+    app.kubernetes.io/name: azure-docintel-layout
+    app.kubernetes.io/instance: default
     app.kubernetes.io/version: "3.1"
     app.kubernetes.io/managed-by: Helm
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: form-recognizer
-      app.kubernetes.io/instance: layout
+      app.kubernetes.io/name: azure-docintel-layout
+      app.kubernetes.io/instance: default
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: form-recognizer
-        app.kubernetes.io/instance: layout
+        app.kubernetes.io/name: azure-docintel-layout
+        app.kubernetes.io/instance: default
     spec:
       containers:
         - name: layout
@@ -58,8 +58,8 @@ spec:
       volumes:
         - name: shared
           persistentVolumeClaim:
-            claimName: layout-form-recognizer-shared
+            claimName: azure-docintel-layout-shared
         - name: output
           persistentVolumeClaim:
-            claimName: layout-form-recognizer-output
+            claimName: azure-docintel-layout-output
 
